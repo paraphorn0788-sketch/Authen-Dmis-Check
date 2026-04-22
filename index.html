@@ -49,6 +49,12 @@
 
   .header-spacer { flex: 1; }
 
+  .version-label {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  margin-top: 2px;
+  }
+
   .btn-settings {
     background: none;
     border: 1px solid #334155;
@@ -432,6 +438,7 @@
   <span class="sub">Excel Validator</span>
   <span id="modeTag"></span>
   <div class="header-spacer"></div>
+  <div class="version-label">V1.2</div>
   <button class="btn-settings" id="btnOpenSettings" title="Settings">⚙</button>
 </header>
 
@@ -596,17 +603,12 @@ function loadSettings() {
   };
 }
 
-function saveSettings() {
-  localStorage.setItem('authendmis_settings', JSON.stringify(cfg));
-}
+const saveSettings = () => localStorage.setItem('authendmis_settings', JSON.stringify(cfg));
 
 /* ── Build TIME_COLORS from cfg ── */
 function buildTimeColors() {
   const map = {};
-  cfg.timeGroups.forEach((t, i) => {
-    if (!t) return;
-    map[t] = { row: TG_ROW_CLASSES[i], dot: TG_COLORS[i], label: t };
-  });
+  cfg.timeGroups.forEach((t, i) => { if (t) map[t] = { row: TG_ROW_CLASSES[i], dot: TG_COLORS[i], label: t }; });
   return map;
 }
 
@@ -628,60 +630,51 @@ function parseColList(str) {
 }
 function colListToSet(str) {
   const set = new Set();
-  parseColList(str).forEach(tok => {
-    const idx = colLetterToIndex(tok);
-    if (idx !== null) set.add(idx);
-  });
+  parseColList(str).forEach(tok => { const idx = colLetterToIndex(tok); if (idx !== null) set.add(idx); });
   return set;
 }
 
 /* ── DOM refs ── */
-const dropOverlay    = document.getElementById('dropOverlay');
-const fileInput      = document.getElementById('fileInput');
-const modePicker     = document.getElementById('modePicker');
-const modeFilename   = document.getElementById('modeFilename');
-const btnAuthen      = document.getElementById('btnAuthen');
-const btnDmis        = document.getElementById('btnDmis');
-const app            = document.getElementById('app');
-const tableWrap      = document.getElementById('tableWrap');
-const statRows       = document.getElementById('statRows');
-const statInvalid    = document.getElementById('statInvalid');
-const statFile       = document.getElementById('statFile');
-const btnNew         = document.getElementById('btnNew');
-const copyPanel      = document.getElementById('copyPanel');
-const legendArea     = document.getElementById('legendArea');
-const modeTag        = document.getElementById('modeTag');
-const invalidContainer  = document.getElementById('invalidContainer');
-const invalidPanelWrap  = document.getElementById('invalidPanelWrap');
-const invalidPanel      = document.getElementById('invalidPanel');
-const btnToggleInvalid  = document.getElementById('btnToggleInvalid');
-const toggleLabel       = document.getElementById('toggleLabel');
-const settingsOverlay   = document.getElementById('settingsOverlay');
-const settingsBackdrop  = document.getElementById('settingsBackdrop');
-const btnOpenSettings   = document.getElementById('btnOpenSettings');
-const btnCloseSettings  = document.getElementById('btnCloseSettings');
-const btnSaveSettings   = document.getElementById('btnSaveSettings');
-const btnResetSettings  = document.getElementById('btnResetSettings');
-const stgInvalidPanel   = document.getElementById('stgInvalidPanel');
-const stgInvalidPopup   = document.getElementById('stgInvalidPopup');
-const tgGrid            = document.getElementById('tgGrid');
-const stgHiddenColsInput = document.getElementById('stgHiddenColsInput');
-const stgColPreview     = document.getElementById('stgColPreview');
-const invalidPopup      = document.getElementById('invalidPopup');
-const popupCount        = document.getElementById('popupCount');
-const popupPlural       = document.getElementById('popupPlural');
-const btnPopupOk        = document.getElementById('btnPopupOk');
+const gel = id => document.getElementById(id);
+const dropOverlay    = gel('dropOverlay');
+const fileInput      = gel('fileInput');
+const modePicker     = gel('modePicker');
+const modeFilename   = gel('modeFilename');
+const btnAuthen      = gel('btnAuthen');
+const btnDmis        = gel('btnDmis');
+const app            = gel('app');
+const tableWrap      = gel('tableWrap');
+const statRows       = gel('statRows');
+const statInvalid    = gel('statInvalid');
+const statFile       = gel('statFile');
+const btnNew         = gel('btnNew');
+const copyPanel      = gel('copyPanel');
+const legendArea     = gel('legendArea');
+const modeTag        = gel('modeTag');
+const invalidContainer  = gel('invalidContainer');
+const invalidPanelWrap  = gel('invalidPanelWrap');
+const invalidPanel      = gel('invalidPanel');
+const btnToggleInvalid  = gel('btnToggleInvalid');
+const toggleLabel       = gel('toggleLabel');
+const settingsOverlay   = gel('settingsOverlay');
+const settingsBackdrop  = gel('settingsBackdrop');
+const btnOpenSettings   = gel('btnOpenSettings');
+const btnCloseSettings  = gel('btnCloseSettings');
+const btnSaveSettings   = gel('btnSaveSettings');
+const btnResetSettings  = gel('btnResetSettings');
+const stgInvalidPanel   = gel('stgInvalidPanel');
+const stgInvalidPopup   = gel('stgInvalidPopup');
+const tgGrid            = gel('tgGrid');
+const stgHiddenColsInput = gel('stgHiddenColsInput');
+const stgColPreview     = gel('stgColPreview');
+const invalidPopup      = gel('invalidPopup');
+const popupCount        = gel('popupCount');
+const popupPlural       = gel('popupPlural');
+const btnPopupOk        = gel('btnPopupOk');
 
 /* ── Settings drawer ── */
-function openSettings() {
-  populateSettingsUI();
-  settingsOverlay.classList.add('open');
-  btnOpenSettings.classList.add('active');
-}
-function closeSettings() {
-  settingsOverlay.classList.remove('open');
-  btnOpenSettings.classList.remove('active');
-}
+const openSettings  = () => { populateSettingsUI(); settingsOverlay.classList.add('open'); btnOpenSettings.classList.add('active'); };
+const closeSettings = () => { settingsOverlay.classList.remove('open'); btnOpenSettings.classList.remove('active'); };
 
 btnOpenSettings.addEventListener('click', openSettings);
 btnCloseSettings.addEventListener('click', closeSettings);
@@ -908,7 +901,7 @@ function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-function colLetter(i) { return colIndexToLetter(i); }
+const colLetter = colIndexToLetter;
 
 function showApp(rows, headers, invalidCount, filename, hiddenCols, timeCopyCfg) {
   const TIME_COLORS = buildTimeColors();
@@ -1109,7 +1102,6 @@ function buildCopyGroups(rows, copyCols, multiCol = false, colTransform = {}) {
   });
   return { groupOrder, groupNames, copyCols, multiCol, colTransform };
 }
-
 /* ── AUTHEN constants ── */
 const AUTHEN = {
   VALID_M: "บริการฟอกเลือดด้วยเครื่องไตเทียม (HD)",
@@ -1133,22 +1125,23 @@ function renderAuthen(data, filename) {
     .map(r => ({ r, invalid: new Set(), rowColor: null, timeGroup: null, skipQ: false, groupBorder: false, stripSecondsCols: new Set([AUTHEN.COL_P, AUTHEN.COL_Q]) }));
 
   let invalidCount = 0;
+  const flag = (row, c) => { row.invalid.add(c); invalidCount++; };
   rows.forEach(row => {
     const r = row.r;
     const pHHMM = getHHMM(r[AUTHEN.COL_P]);
     if (TIME_COLORS[pHHMM]) { row.rowColor = TIME_COLORS[pHHMM].row; row.timeGroup = pHHMM; }
     else { row.rowColor = 'row-purple'; row.timeGroup = pHHMM || null; }
 
-    if (String(r[AUTHEN.COL_I] ?? '').trim() !== 'E')            { row.invalid.add(AUTHEN.COL_I); invalidCount++; }
-    if (String(r[AUTHEN.COL_M] ?? '').trim() !== AUTHEN.VALID_M) { row.invalid.add(AUTHEN.COL_M); invalidCount++; }
+    if (String(r[AUTHEN.COL_I] ?? '').trim() !== 'E')            flag(row, AUTHEN.COL_I);
+    if (String(r[AUTHEN.COL_M] ?? '').trim() !== AUTHEN.VALID_M) flag(row, AUTHEN.COL_M);
 
     if (!pHHMM || !VALID_TIMES.includes(pHHMM)) {
-      row.invalid.add(AUTHEN.COL_P); invalidCount++; row.skipQ = true;
+      flag(row, AUTHEN.COL_P); row.skipQ = true;
     }
     if (!row.skipQ) {
       const pMin = toTotalMinutes(r[AUTHEN.COL_P]);
       const qMin = toTotalMinutes(r[AUTHEN.COL_Q]);
-      if (pMin === null || qMin === null || (qMin - pMin) < 240) { row.invalid.add(AUTHEN.COL_Q); invalidCount++; }
+      if (pMin === null || qMin === null || (qMin - pMin) < 240) flag(row, AUTHEN.COL_Q);
     }
   });
 
@@ -1167,7 +1160,7 @@ function renderAuthen(data, filename) {
 const DMIS = {
   COL_F:5, COL_G:6, COL_I:8, COL_K:10, COL_L:11, COL_M:12, COL_N:13,
   COL_O:14, COL_P:15, COL_Q:16, COL_R:17, COL_S:18, COL_U:20, COL_V:21,
-  COL_W:22, COL_X:23, COL_Z:25, COL_AA:26, COL_AB:27, COL_AW:48, COL_D:3,
+  COL_W:22, COL_X:23, COL_Z:25, COL_AA:26, COL_AB:27, COL_AC:28, COL_AX:49, COL_D:3,
   DATA_START: 9,
 };
 
@@ -1192,29 +1185,31 @@ function renderDmis(data, filename) {
     .map(r => ({ r, invalid: new Set(), rowColor: null, timeGroup: null, groupBorder: false, stripSecondsCols: new Set([DMIS.COL_F, DMIS.COL_G]) }));
 
   let invalidCount = 0;
+  const flag = (row, c) => { row.invalid.add(c); invalidCount++; };
   rows.forEach(row => {
     const r = row.r;
     const fHHMM = getHHMM(r[DMIS.COL_F]);
     if (TIME_COLORS[fHHMM]) { row.rowColor = TIME_COLORS[fHHMM].row; row.timeGroup = fHHMM; }
     else { row.rowColor = 'row-purple'; row.timeGroup = fHHMM || null; }
 
-    if (String(r[DMIS.COL_K] ?? '').trim().toLowerCase() !== 'opd') { row.invalid.add(DMIS.COL_K); invalidCount++; }
+    if (String(r[DMIS.COL_K] ?? '').trim().toLowerCase() !== 'opd') flag(row, DMIS.COL_K);
     for (const c of [DMIS.COL_L, DMIS.COL_M, DMIS.COL_N, DMIS.COL_O, DMIS.COL_S, DMIS.COL_V, DMIS.COL_W, DMIS.COL_Z]) {
-      if (r[c] === '' || r[c] == null) { row.invalid.add(c); invalidCount++; }
+      if (r[c] === '' || r[c] == null) flag(row, c);
     }
-    if (!dmisMatchP(r[DMIS.COL_P])) { row.invalid.add(DMIS.COL_P); invalidCount++; }
-    if (String(r[DMIS.COL_Q] ?? '').trim().toLowerCase() !== 'synthetic') { row.invalid.add(DMIS.COL_Q); invalidCount++; }
-    if (String(r[DMIS.COL_R] ?? '').trim().toLowerCase() !== 'high flux')  { row.invalid.add(DMIS.COL_R); invalidCount++; }
+    if (!dmisMatchP(r[DMIS.COL_P])) flag(row, DMIS.COL_P);
+    if (String(r[DMIS.COL_Q] ?? '').trim().toLowerCase() !== 'synthetic') flag(row, DMIS.COL_Q);
+    if (String(r[DMIS.COL_R] ?? '').trim().toLowerCase() !== 'high flux')  flag(row, DMIS.COL_R);
     const uVal = parseFloat(r[DMIS.COL_U]);
-    if (isNaN(uVal) || uVal !== 300) { row.invalid.add(DMIS.COL_U); invalidCount++; }
+    if (isNaN(uVal) || uVal !== 300) flag(row, DMIS.COL_U);
     const xVal = parseFloat(r[DMIS.COL_X]);
-    if (isNaN(xVal) || xVal < 0 || xVal > 5) { row.invalid.add(DMIS.COL_X); invalidCount++; }
-    const abVal = r[DMIS.COL_AB];
-    if (abVal !== '' && abVal != null && abVal !== 1 && parseFloat(abVal) !== 1) { row.invalid.add(DMIS.COL_AB); invalidCount++; }
-    if (!fHHMM || !VALID_TIMES.includes(fHHMM)) { row.invalid.add(DMIS.COL_F); invalidCount++; }
+    if (isNaN(xVal) || xVal < 0 || xVal > 5) flag(row, DMIS.COL_X);
+    if (r[DMIS.COL_AA] === '' || r[DMIS.COL_AA] == null) flag(row, DMIS.COL_AA);
+    const abVal = r[DMIS.COL_AC];
+    if (abVal !== '' && abVal != null && abVal !== 1 && parseFloat(abVal) !== 1) flag(row, DMIS.COL_AC);
+    if (!fHHMM || !VALID_TIMES.includes(fHHMM)) flag(row, DMIS.COL_F);
     const fMin = toTotalMinutes(r[DMIS.COL_F]);
     const gMin = toTotalMinutes(r[DMIS.COL_G]);
-    if (fMin === null || gMin === null || Math.round(gMin - fMin) !== 240) { row.invalid.add(DMIS.COL_G); invalidCount++; }
+    if (fMin === null || gMin === null || Math.round(gMin - fMin) !== 240) flag(row, DMIS.COL_G);
   });
 
   const TIME_ORDER = cfg.timeGroups.filter(Boolean);
@@ -1222,7 +1217,7 @@ function renderDmis(data, filename) {
   rows.sort((a, b) => {
     const ta = timeRank(a.timeGroup), tb = timeRank(b.timeGroup);
     if (ta !== tb) return ta - tb;
-    return (toTotalMinutes(a.r[DMIS.COL_AW]) ?? 0) - (toTotalMinutes(b.r[DMIS.COL_AW]) ?? 0);
+    return (toTotalMinutes(a.r[DMIS.COL_AX]) ?? 0) - (toTotalMinutes(b.r[DMIS.COL_AX]) ?? 0);
   });
   for (let i = 1; i < rows.length; i++) {
     const prev = getHHMM(rows[i-1].r[DMIS.COL_F]);
@@ -1230,32 +1225,33 @@ function renderDmis(data, filename) {
     if (prev && curr && prev !== curr) rows[i].groupBorder = true;
   }
 
+  const sv = val => String(val ?? '');
   const dmisTransform = {
     [DMIS.COL_I]: val => {
-      const s = String(val ?? '').trim().toLowerCase();
+      const s = sv(val).trim().toLowerCase();
       if (s === 'bob') return 'BOBBY';
       if (s === 'mike') return 'Mikey';
-      return String(val ?? '');
+      return sv(val);
     },
     [DMIS.COL_S]: val => {
-      const s = String(val ?? '').trim().toLowerCase();
+      const s = sv(val).trim().toLowerCase();
       if (s === 'shunt')    return 'AVF';
       if (s === 'graft')    return 'AVG';
       if (s === 'pem cath') return 'PC';
       if (s === 'temp cath') return 'DLC';
-      return String(val ?? '');
+      return sv(val);
     },
-    [DMIS.COL_V]: val => String(val ?? '').trim().toLowerCase() === 'yes' ? 'New' : String(val ?? ''),
-    [DMIS.COL_AA]: val => {
-      const s = String(val ?? '').trim().toUpperCase();
+    [DMIS.COL_V]: val => sv(val).trim().toLowerCase() === 'yes' ? 'New' : sv(val),
+    [DMIS.COL_AB]: val => {
+      const s = sv(val).trim().toUpperCase();
       if (s.includes('HYPERCRIT')) return 'Hypercrit';
       if (s.includes('ESPOGEN'))   return 'Espogen';
       if (s.includes('HEMA-PLUS') || s.includes('HEMAPLUS')) return 'Hemaplus';
       if (s.includes('EPIAO'))     return 'Epiao';
-      return String(val ?? '');
+      return sv(val);
     }
   };
-  const dmisCopyCols = [DMIS.COL_I, DMIS.COL_S, DMIS.COL_V, DMIS.COL_Z, DMIS.COL_AA];
+  const dmisCopyCols = [DMIS.COL_I, DMIS.COL_S, DMIS.COL_V, DMIS.COL_Z, DMIS.COL_AA, DMIS.COL_AB];
   showApp(rows, headers, invalidCount, filename, hiddenCols, buildCopyGroups(rows, dmisCopyCols, true, dmisTransform));
 }
 
