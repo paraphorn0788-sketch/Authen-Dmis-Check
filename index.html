@@ -438,7 +438,7 @@
   <span class="sub">Excel Validator</span>
   <span id="modeTag"></span>
   <div class="header-spacer"></div>
-  <div class="version-label">V1.3</div>
+  <div class="version-label">V1.4</div>
   <button class="btn-settings" id="btnOpenSettings" title="Settings">⚙</button>
 </header>
 
@@ -949,15 +949,16 @@ function showApp(rows, headers, invalidCount, filename, hiddenCols, timeCopyCfg)
         const lines   = rowsArr.map(r => copyCols.map(ci => { const raw = r[ci] ?? ''; return colTransform && colTransform[ci] ? colTransform[ci](raw) : String(raw); }).join('\t'));
         const text    = lines.join('\r\n');
         const btn     = document.createElement('button');
+        const rowCount = rowsArr.length;
         btn.className = 'copy-btn';
-        btn.innerHTML = `<span class="cbdot" style="background:${dotColor}"></span>Copy ${label} Names`;
+        btn.innerHTML = `<span class="cbdot" style="background:${dotColor}"></span>Copy ${label} Names (${rowCount})`;
         btn.addEventListener('click', () => {
           navigator.clipboard.writeText(text).then(() => {
             btn.classList.add('copied');
-            btn.innerHTML = `<span class="cbdot" style="background:#86efac"></span>Copied!`;
+            btn.innerHTML = `<span class="cbdot" style="background:#86efac"></span>Copied ${rowCount} names!`;
             setTimeout(() => {
               btn.classList.remove('copied');
-              btn.innerHTML = `<span class="cbdot" style="background:${dotColor}"></span>Copy ${label} Names`;
+              btn.innerHTML = `<span class="cbdot" style="background:${dotColor}"></span>Copy ${label} Names (${rowCount})`;
             }, 2000);
           });
         });
