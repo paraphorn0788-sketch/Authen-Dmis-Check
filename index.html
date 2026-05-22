@@ -438,7 +438,7 @@
   <span class="sub">Excel Validator</span>
   <span id="modeTag"></span>
   <div class="header-spacer"></div>
-  <div class="version-label">V1.2</div>
+  <div class="version-label">V1.3</div>
   <button class="btn-settings" id="btnOpenSettings" title="Settings">⚙</button>
 </header>
 
@@ -1164,6 +1164,19 @@ const DMIS = {
   DATA_START: 9,
 };
 
+function isValidBP(val) {
+  const s = String(val ?? '').trim();
+  if (!s) return false;
+  const m = s.match(/^(\d{1,3})\/(\d{1,3})$/);
+  if (!m) return false;
+  const sys = parseInt(m[1], 10);
+  const dia = parseInt(m[2], 10);
+  if (sys < 60 || sys > 260) return false;
+  if (dia < 30 || dia > 160) return false;
+  if (sys <= dia) return false;
+  return true;
+}
+
 function dmisMatchP(val) {
   const s = String(val ?? '').trim().toLowerCase();
   return s === "4 ชั่วโมง 0 นาที" || s === "4 ªñ่âáã 0 ¹ò·õ" || (s.includes("4") && s.includes("0"));
@@ -1193,9 +1206,11 @@ function renderDmis(data, filename) {
     else { row.rowColor = 'row-purple'; row.timeGroup = fHHMM || null; }
 
     if (String(r[DMIS.COL_K] ?? '').trim().toLowerCase() !== 'opd') flag(row, DMIS.COL_K);
-    for (const c of [DMIS.COL_L, DMIS.COL_M, DMIS.COL_N, DMIS.COL_O, DMIS.COL_S, DMIS.COL_V, DMIS.COL_W, DMIS.COL_Z]) {
+    for (const c of [DMIS.COL_L, DMIS.COL_M, DMIS.COL_S, DMIS.COL_V, DMIS.COL_W, DMIS.COL_Z]) {
       if (r[c] === '' || r[c] == null) flag(row, c);
     }
+    if (!isValidBP(r[DMIS.COL_N])) flag(row, DMIS.COL_N);
+    if (!isValidBP(r[DMIS.COL_O])) flag(row, DMIS.COL_O);
     if (!dmisMatchP(r[DMIS.COL_P])) flag(row, DMIS.COL_P);
     if (String(r[DMIS.COL_Q] ?? '').trim().toLowerCase() !== 'synthetic') flag(row, DMIS.COL_Q);
     if (String(r[DMIS.COL_R] ?? '').trim().toLowerCase() !== 'high flux')  flag(row, DMIS.COL_R);
