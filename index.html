@@ -50,9 +50,9 @@
   .header-spacer { flex: 1; }
 
   .version-label {
-  font-size: 0.7rem;
-  color: #94a3b8;
-  margin-top: 2px;
+    font-size: 0.7rem;
+    color: #94a3b8;
+    margin-top: 2px;
   }
 
   .btn-settings {
@@ -70,7 +70,6 @@
   .btn-settings:hover { background: #334155; color: #f1f5f9; border-color: #475569; }
   .btn-settings.active { background: #334155; color: #f1f5f9; border-color: var(--accent); }
 
-  /* Drop overlay */
   #dropOverlay {
     position: fixed; inset: 0; z-index: 10;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -82,7 +81,6 @@
   .drop-title { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.4rem; pointer-events: none; }
   .drop-sub   { font-size: 0.85rem; color: var(--text-secondary); pointer-events: none; }
 
-  /* Mode picker */
   #modePicker {
     position: fixed; inset: 0; z-index: 30;
     display: none; align-items: center; justify-content: center;
@@ -117,7 +115,6 @@
   .mode-btn.dmis:hover   { background: #bbf7d0; transform: translateY(-2px); box-shadow: 0 4px 14px rgba(21,128,61,0.15); }
   .mode-filename { font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 1.25rem; font-weight: 600; }
 
-  /* App */
   #app { display: none; flex-direction: column; height: calc(100vh - 47px); }
 
   .toolbar {
@@ -139,7 +136,6 @@
   .btn-new { background: var(--accent); color: #fff; border: none; padding: 0.4rem 0.9rem; border-radius: 5px; font-size: 0.78rem; font-weight: 600; cursor: pointer; font-family: inherit; }
   .btn-new:hover { background: #1e40af; }
 
-  /* Table */
   .table-wrap { flex: 1; overflow: auto; background: var(--surface); }
   table { border-collapse: collapse; width: 100%; table-layout: auto; }
   thead tr { background: var(--header-bg); position: sticky; top: 0; z-index: 5; }
@@ -163,7 +159,6 @@
   tr.selected td.invalid { animation: blinkInvalid 2s ease-in-out infinite; }
   tr.group-border td { border-top: 2px solid #1d4ed8 !important; }
 
-  /* Floating copy panel */
   #copyPanel {
     position: fixed; bottom: 1.25rem; left: 1.25rem;
     z-index: 100; display: none; flex-direction: column; gap: 0.5rem;
@@ -182,7 +177,6 @@
   .copy-btn .cbdot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.3); }
   .copy-btn.copied { background: #15803d !important; }
 
-  /* Invalid nav container */
   #invalidContainer {
     position: fixed; bottom: 1.25rem; right: 1.25rem;
     z-index: 100; display: none; flex-direction: column; align-items: flex-end; gap: 0;
@@ -250,7 +244,6 @@
   }
   .inv-btn.solved .inv-solved-check { background: #16a34a; border-color: #4ade80; color: #fff; }
 
-  /* ── Settings Drawer (white theme) ── */
   #settingsOverlay {
     position: fixed; inset: 0; z-index: 200;
     background: rgba(15,23,42,0.35);
@@ -297,7 +290,6 @@
     padding-bottom: 0.4rem; border-bottom: 1px solid #f3f4f6;
   }
 
-  /* Toggle row */
   .sdw-row {
     display: flex; align-items: center; gap: 0.75rem;
     padding: 0.65rem 0.8rem;
@@ -325,7 +317,6 @@
   .toggle-switch input:checked + .toggle-track { background: #1d4ed8; }
   .toggle-switch input:checked + .toggle-track::after { transform: translateX(17px); }
 
-  /* Time group inputs */
   .tg-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 0.5rem; }
   .tg-item { display: flex; flex-direction: column; gap: 0.3rem; }
   .tg-slot-label {
@@ -343,7 +334,6 @@
   .tg-input.invalid-time { border-color: #ef4444; background: #fff5f5; color: #dc2626; }
   .tg-color-dot { width: 8px; height: 8px; border-radius: 2px; margin: 0 auto 0.1rem; }
 
-  /* Hidden cols input */
   .sdw-mode-tabs { display: flex; gap: 0.4rem; margin-bottom: 0.1rem; }
   .sdw-tab {
     padding: 0.28rem 0.8rem; border-radius: 5px; font-size: 0.72rem; font-weight: 700;
@@ -375,7 +365,6 @@
   .sdw-col-tag.err { background: #fee2e2; color: #dc2626; }
   .sdw-col-hint { font-size: 0.68rem; color: #9ca3af; }
 
-  /* Footer buttons */
   .sdw-footer {
     padding: 0.85rem 1.25rem;
     border-top: 1px solid #e5e7eb;
@@ -396,7 +385,6 @@
   }
   .btn-reset-settings:hover { background: #f3f4f6; color: #374151; border-color: #d1d5db; }
 
-  /* ── Invalid count popup ── */
   #invalidPopup {
     position: fixed; inset: 0; z-index: 150;
     display: none; align-items: center; justify-content: center;
@@ -438,7 +426,7 @@
   <span class="sub">Excel Validator</span>
   <span id="modeTag"></span>
   <div class="header-spacer"></div>
-  <div class="version-label">V1.4</div>
+  <div class="version-label">V1.5</div>
   <button class="btn-settings" id="btnOpenSettings" title="Settings">⚙</button>
 </header>
 
@@ -482,7 +470,6 @@
   </div>
 </div>
 
-<!-- Invalid count popup -->
 <div id="invalidPopup">
   <div class="inv-popup-card">
     <div class="inv-popup-icon">⚠️</div>
@@ -492,7 +479,6 @@
   </div>
 </div>
 
-<!-- Settings Drawer -->
 <div id="settingsOverlay">
   <div style="flex:1" id="settingsBackdrop"></div>
   <div id="settingsDrawer">
@@ -505,7 +491,6 @@
     </div>
     <div class="sdw-body">
 
-      <!-- General -->
       <div class="sdw-section">
         <div class="sdw-section-title">General</div>
         <div class="sdw-row">
@@ -530,18 +515,28 @@
         </div>
       </div>
 
-      <!-- Time groups -->
+      <div class="sdw-section">
+        <div class="sdw-section-title">Authen — AUTHEN Mode</div>
+        <div class="sdw-row">
+          <div class="sdw-row-info">
+            <div class="sdw-row-label">Auto-resolve cancelled rows (Col I = "C")</div>
+            <div class="sdw-row-desc">In AUTHEN mode, automatically mark invalid cells as solved on rows where Col I is "C" (cancelled)</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="stgAutoCancelSolve" checked>
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+      </div>
+
       <div class="sdw-section">
         <div class="sdw-section-title">Time Group Start Times</div>
-        <div class="tg-grid" id="tgGrid">
-          <!-- slots injected by JS -->
-        </div>
+        <div class="tg-grid" id="tgGrid"></div>
         <div style="font-size:0.68rem;color:#475569;margin-top:0.25rem">
           Format: HH:MM — each slot groups rows matching that start time.
         </div>
       </div>
 
-      <!-- Hidden columns -->
       <div class="sdw-section">
         <div class="sdw-section-title">Hidden Columns</div>
         <div class="sdw-mode-tabs">
@@ -564,10 +559,10 @@
 </div>
 
 <script>
-/* ── Defaults ── */
 const DEFAULTS = {
   invalidPanelEnabled: true,
   invalidPopupEnabled: true,
+  autoCancelSolve: true,
   timeGroups: ['05:00','09:30','14:00','18:30'],
   hiddenCols: { authen: 'G, H', dmis: '' },
 };
@@ -575,7 +570,6 @@ const DEFAULTS = {
 const TG_COLORS = ['#a8d5a2','#9ac4e8','#ffe082','#f4a9a9'];
 const TG_ROW_CLASSES = ['row-green','row-blue','row-yellow','row-redish'];
 
-/* ── Settings state ── */
 let cfg = loadSettings();
 let settingsActiveTab = 'authen';
 let pendingData = null, pendingName = null;
@@ -586,18 +580,20 @@ function loadSettings() {
   try {
     const raw = localStorage.getItem('authendmis_settings');
     if (raw) {
-      const saved = JSON.parse(raw);
+      const s = JSON.parse(raw);
       return {
-        invalidPanelEnabled: saved.invalidPanelEnabled ?? DEFAULTS.invalidPanelEnabled,
-        invalidPopupEnabled: saved.invalidPopupEnabled ?? DEFAULTS.invalidPopupEnabled,
-        timeGroups: Array.isArray(saved.timeGroups) && saved.timeGroups.length === 4 ? saved.timeGroups : [...DEFAULTS.timeGroups],
-        hiddenCols: { ...DEFAULTS.hiddenCols, ...saved.hiddenCols },
+        invalidPanelEnabled: s.invalidPanelEnabled ?? DEFAULTS.invalidPanelEnabled,
+        invalidPopupEnabled: s.invalidPopupEnabled ?? DEFAULTS.invalidPopupEnabled,
+        autoCancelSolve:     s.autoCancelSolve     ?? DEFAULTS.autoCancelSolve,
+        timeGroups: Array.isArray(s.timeGroups) && s.timeGroups.length === 4 ? s.timeGroups : [...DEFAULTS.timeGroups],
+        hiddenCols: { ...DEFAULTS.hiddenCols, ...s.hiddenCols },
       };
     }
   } catch(e) {}
   return {
     invalidPanelEnabled: DEFAULTS.invalidPanelEnabled,
     invalidPopupEnabled: DEFAULTS.invalidPopupEnabled,
+    autoCancelSolve:     DEFAULTS.autoCancelSolve,
     timeGroups: [...DEFAULTS.timeGroups],
     hiddenCols: { ...DEFAULTS.hiddenCols },
   };
@@ -605,14 +601,12 @@ function loadSettings() {
 
 const saveSettings = () => localStorage.setItem('authendmis_settings', JSON.stringify(cfg));
 
-/* ── Build TIME_COLORS from cfg ── */
 function buildTimeColors() {
   const map = {};
   cfg.timeGroups.forEach((t, i) => { if (t) map[t] = { row: TG_ROW_CLASSES[i], dot: TG_COLORS[i], label: t }; });
   return map;
 }
 
-/* ── Column letter helpers ── */
 function colLetterToIndex(s) {
   s = s.trim().toUpperCase();
   if (!/^[A-Z]+$/.test(s)) return null;
@@ -634,7 +628,6 @@ function colListToSet(str) {
   return set;
 }
 
-/* ── DOM refs ── */
 const gel = id => document.getElementById(id);
 const dropOverlay    = gel('dropOverlay');
 const fileInput      = gel('fileInput');
@@ -664,6 +657,7 @@ const btnSaveSettings   = gel('btnSaveSettings');
 const btnResetSettings  = gel('btnResetSettings');
 const stgInvalidPanel   = gel('stgInvalidPanel');
 const stgInvalidPopup   = gel('stgInvalidPopup');
+const stgAutoCancelSolve = gel('stgAutoCancelSolve');
 const tgGrid            = gel('tgGrid');
 const stgHiddenColsInput = gel('stgHiddenColsInput');
 const stgColPreview     = gel('stgColPreview');
@@ -672,7 +666,6 @@ const popupCount        = gel('popupCount');
 const popupPlural       = gel('popupPlural');
 const btnPopupOk        = gel('btnPopupOk');
 
-/* ── Settings drawer ── */
 const openSettings  = () => { populateSettingsUI(); settingsOverlay.classList.add('open'); btnOpenSettings.classList.add('active'); };
 const closeSettings = () => { settingsOverlay.classList.remove('open'); btnOpenSettings.classList.remove('active'); };
 
@@ -681,8 +674,9 @@ btnCloseSettings.addEventListener('click', closeSettings);
 settingsBackdrop.addEventListener('click', closeSettings);
 
 function populateSettingsUI() {
-  stgInvalidPanel.checked = cfg.invalidPanelEnabled;
-  stgInvalidPopup.checked = cfg.invalidPopupEnabled;
+  stgInvalidPanel.checked    = cfg.invalidPanelEnabled;
+  stgInvalidPopup.checked    = cfg.invalidPopupEnabled;
+  stgAutoCancelSolve.checked = cfg.autoCancelSolve;
 
   tgGrid.innerHTML = '';
   cfg.timeGroups.forEach((t, i) => {
@@ -756,6 +750,7 @@ function collectSettingsFromUI() {
   return {
     invalidPanelEnabled: stgInvalidPanel.checked,
     invalidPopupEnabled: stgInvalidPopup.checked,
+    autoCancelSolve:     stgAutoCancelSolve.checked,
     timeGroups: newTg,
     hiddenCols: newHidden,
   };
@@ -786,6 +781,7 @@ btnResetSettings.addEventListener('click', () => {
   cfg = {
     invalidPanelEnabled: DEFAULTS.invalidPanelEnabled,
     invalidPopupEnabled: DEFAULTS.invalidPopupEnabled,
+    autoCancelSolve:     DEFAULTS.autoCancelSolve,
     timeGroups: [...DEFAULTS.timeGroups],
     hiddenCols: { ...DEFAULTS.hiddenCols },
   };
@@ -793,7 +789,6 @@ btnResetSettings.addEventListener('click', () => {
   populateSettingsUI();
 });
 
-/* ── Invalid count popup ── */
 btnPopupOk.addEventListener('click', () => invalidPopup.classList.remove('show'));
 invalidPopup.addEventListener('click', e => { if (e.target === invalidPopup) invalidPopup.classList.remove('show'); });
 
@@ -804,7 +799,6 @@ function showInvalidPopup(count) {
   invalidPopup.classList.add('show');
 }
 
-/* ── Invalid panel toggle ── */
 btnToggleInvalid.addEventListener('click', () => {
   invalidPanelVisible = !invalidPanelVisible;
   if (invalidPanelVisible) {
@@ -818,7 +812,6 @@ btnToggleInvalid.addEventListener('click', () => {
   }
 });
 
-/* ── Drop / file input ── */
 document.addEventListener('dragover', e => { e.preventDefault(); dropOverlay.classList.add('dragging'); });
 document.addEventListener('dragleave', e => { if (!e.relatedTarget) dropOverlay.classList.remove('dragging'); });
 document.addEventListener('drop', e => {
@@ -855,7 +848,6 @@ function loadFile(file) {
   reader.readAsArrayBuffer(file);
 }
 
-/* ── Shared helpers ── */
 function toTotalMinutes(val) {
   if (val == null || val === '') return null;
   if (typeof val === 'string') {
@@ -1014,7 +1006,7 @@ function buildInvalidPanel(rows, headers, hiddenCols) {
         const h = headers[ci];
         return (h != null && h !== '') ? String(h) : colLetter(ci);
       })();
-      entries.push({ rowIdx, colIdx: ci, rowLabel: rowIdx + 1, colLabel });
+      entries.push({ rowIdx, colIdx: ci, rowLabel: rowIdx + 1, colLabel, row });
     });
   });
 
@@ -1042,6 +1034,20 @@ function buildInvalidPanel(rows, headers, hiddenCols) {
         if (!hiddenCols.has(c)) visibleIdx++;
       }
       return { td: tr.cells[visibleIdx], tr };
+    };
+
+    const markSolved = () => {
+      btn.classList.add('solved');
+      const check = btn.querySelector('.inv-solved-check');
+      check.textContent = '✓';
+      btn.classList.remove('focused');
+      if (lastFocused === btn) lastFocused = null;
+      const res = getTd();
+      if (!res) return;
+      const { td } = res;
+      td.classList.remove('invalid');
+      td.style.background = '#ffffff'; td.style.color = '#111827';
+      td.style.fontWeight = ''; td.style.animation = 'none';
     };
 
     btn.addEventListener('click', (e) => {
@@ -1085,6 +1091,15 @@ function buildInvalidPanel(rows, headers, hiddenCols) {
     });
 
     invalidPanel.appendChild(btn);
+
+    /* auto-solve cancelled rows in AUTHEN mode */
+    if (
+      currentMode === 'authen' &&
+      cfg.autoCancelSolve &&
+      String(entry.row.r[AUTHEN.COL_I] ?? '').trim().toUpperCase() === 'C'
+    ) {
+      markSolved();
+    }
   });
 
   invalidContainer.style.display = 'flex';
@@ -1103,7 +1118,7 @@ function buildCopyGroups(rows, copyCols, multiCol = false, colTransform = {}) {
   });
   return { groupOrder, groupNames, copyCols, multiCol, colTransform };
 }
-/* ── AUTHEN constants ── */
+
 const AUTHEN = {
   VALID_M: "บริการฟอกเลือดด้วยเครื่องไตเทียม (HD)",
   COL_D: 3, COL_G: 6, COL_H: 7, COL_I: 8, COL_M: 12, COL_P: 15, COL_Q: 16,
@@ -1117,7 +1132,6 @@ function renderAuthen(data, filename) {
   modeTag.textContent = 'AUTHEN'; modeTag.className = 'authen'; modeTag.style.display = 'inline-block';
 
   const hiddenCols = colListToSet(cfg.hiddenCols.authen || '');
-
   legendArea.innerHTML = buildLegendHTML();
 
   const headers = data[0] || [];
@@ -1157,7 +1171,6 @@ function renderAuthen(data, filename) {
   showApp(rows, headers, invalidCount, filename, hiddenCols, buildCopyGroups(copyRows, [AUTHEN.COL_D], false));
 }
 
-/* ── DMIS constants ── */
 const DMIS = {
   COL_F:5, COL_G:6, COL_I:8, COL_K:10, COL_L:11, COL_M:12, COL_N:13,
   COL_O:14, COL_P:15, COL_Q:16, COL_R:17, COL_S:18, COL_U:20, COL_V:21,
@@ -1190,7 +1203,6 @@ function renderDmis(data, filename) {
   modeTag.textContent = 'DMIS'; modeTag.className = 'dmis'; modeTag.style.display = 'inline-block';
 
   const hiddenCols = colListToSet(cfg.hiddenCols.dmis || '');
-
   legendArea.innerHTML = buildLegendHTML();
 
   const headers = data[5] || [];
@@ -1271,9 +1283,7 @@ function renderDmis(data, filename) {
   showApp(rows, headers, invalidCount, filename, hiddenCols, buildCopyGroups(rows, dmisCopyCols, true, dmisTransform));
 }
 
-/* ── Legend builder ── */
 function buildLegendHTML() {
-  const TIME_COLORS = buildTimeColors();
   const rowClassColors = { 'row-green':'#d9ead3','row-blue':'#cfe2f3','row-yellow':'#fff2cc','row-redish':'#f4cccc' };
   let html = '';
   cfg.timeGroups.forEach((t, i) => {
@@ -1287,7 +1297,6 @@ function buildLegendHTML() {
   return html;
 }
 
-/* ── Row select ── */
 function selectRow(tr) {
   const prev = document.querySelector('tbody tr.selected');
   if (prev && prev !== tr) prev.classList.remove('selected');
