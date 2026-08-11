@@ -527,6 +527,16 @@
             <span class="toggle-track"></span>
           </label>
         </div>
+        <div class="sdw-row">
+          <div class="sdw-row-info">
+            <div class="sdw-row-label">Skip invalid rows when copying names</div>
+            <div class="sdw-row-desc">In AUTHEN mode, exclude rows that contain invalid cells from the copied names</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="stgSkipInvalidCopy">
+            <span class="toggle-track"></span>
+          </label>
+        </div>
       </div>
 
       <div class="sdw-section">
@@ -563,6 +573,7 @@ const DEFAULTS = {
   invalidPanelEnabled: true,
   invalidPopupEnabled: true,
   autoCancelSolve: true,
+  skipInvalidAuthenCopy: false,
   timeGroups: ['05:00','09:30','14:00','18:30'],
   hiddenCols: { authen: 'G, H', dmis: '' },
 };
@@ -585,6 +596,7 @@ function loadSettings() {
         invalidPanelEnabled: s.invalidPanelEnabled ?? DEFAULTS.invalidPanelEnabled,
         invalidPopupEnabled: s.invalidPopupEnabled ?? DEFAULTS.invalidPopupEnabled,
         autoCancelSolve:     s.autoCancelSolve     ?? DEFAULTS.autoCancelSolve,
+        skipInvalidAuthenCopy: s.skipInvalidAuthenCopy ?? DEFAULTS.skipInvalidAuthenCopy,
         timeGroups: Array.isArray(s.timeGroups) && s.timeGroups.length === 4 ? s.timeGroups : [...DEFAULTS.timeGroups],
         hiddenCols: { ...DEFAULTS.hiddenCols, ...s.hiddenCols },
       };
@@ -594,6 +606,7 @@ function loadSettings() {
     invalidPanelEnabled: DEFAULTS.invalidPanelEnabled,
     invalidPopupEnabled: DEFAULTS.invalidPopupEnabled,
     autoCancelSolve:     DEFAULTS.autoCancelSolve,
+    skipInvalidAuthenCopy: DEFAULTS.skipInvalidAuthenCopy,
     timeGroups: [...DEFAULTS.timeGroups],
     hiddenCols: { ...DEFAULTS.hiddenCols },
   };
@@ -658,6 +671,7 @@ const btnResetSettings  = gel('btnResetSettings');
 const stgInvalidPanel   = gel('stgInvalidPanel');
 const stgInvalidPopup   = gel('stgInvalidPopup');
 const stgAutoCancelSolve = gel('stgAutoCancelSolve');
+const stgSkipInvalidCopy = gel('stgSkipInvalidCopy');
 const tgGrid            = gel('tgGrid');
 const stgHiddenColsInput = gel('stgHiddenColsInput');
 const stgColPreview     = gel('stgColPreview');
@@ -677,6 +691,7 @@ function populateSettingsUI() {
   stgInvalidPanel.checked    = cfg.invalidPanelEnabled;
   stgInvalidPopup.checked    = cfg.invalidPopupEnabled;
   stgAutoCancelSolve.checked = cfg.autoCancelSolve;
+  stgSkipInvalidCopy.checked = cfg.skipInvalidAuthenCopy;
 
   tgGrid.innerHTML = '';
   cfg.timeGroups.forEach((t, i) => {
@@ -751,6 +766,7 @@ function collectSettingsFromUI() {
     invalidPanelEnabled: stgInvalidPanel.checked,
     invalidPopupEnabled: stgInvalidPopup.checked,
     autoCancelSolve:     stgAutoCancelSolve.checked,
+    skipInvalidAuthenCopy: stgSkipInvalidCopy.checked,
     timeGroups: newTg,
     hiddenCols: newHidden,
   };
@@ -782,6 +798,7 @@ btnResetSettings.addEventListener('click', () => {
     invalidPanelEnabled: DEFAULTS.invalidPanelEnabled,
     invalidPopupEnabled: DEFAULTS.invalidPopupEnabled,
     autoCancelSolve:     DEFAULTS.autoCancelSolve,
+    skipInvalidAuthenCopy: DEFAULTS.skipInvalidAuthenCopy,
     timeGroups: [...DEFAULTS.timeGroups],
     hiddenCols: { ...DEFAULTS.hiddenCols },
   };
@@ -1167,7 +1184,8 @@ function renderAuthen(data, filename) {
     if (prev && curr && prev !== curr) rows[i].groupBorder = true;
   }
 
-  const copyRows = rows.filter(r => r.rowColor !== 'row-purple');
+  let copyRows = rows.filter(r => r.rowColor !== 'row-purple');
+  if (cfg.skipInvalidAuthenCopy) copyRows = copyRows.filter(r => r.invalid.size === 0);
   showApp(rows, headers, invalidCount, filename, hiddenCols, buildCopyGroups(copyRows, [AUTHEN.COL_D], false));
 }
 
