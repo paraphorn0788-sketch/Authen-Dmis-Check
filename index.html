@@ -158,6 +158,9 @@
   td.invalid { animation: blinkInvalid 2s ease-in-out infinite; font-weight: 700; }
   tr.selected td.invalid { animation: blinkInvalid 2s ease-in-out infinite; }
   tr.group-border td { border-top: 2px solid #1d4ed8 !important; }
+  tr.row-has-invalid td { border-top: 2px solid #dc2626 !important; border-bottom: 2px solid #dc2626; }
+  tr.row-has-invalid td:first-child { border-left: 2px solid #dc2626; }
+  tr.row-has-invalid td:last-child { border-right: 2px solid #dc2626; }
 
   #copyPanel {
     position: fixed; bottom: 1.25rem; left: 1.25rem;
@@ -1005,7 +1008,7 @@ function showApp(rows, headers, invalidCount, filename, hiddenCols, timeCopyCfg)
   }</tr></thead><tbody>`;
 
   rows.forEach((row, idx) => {
-    const cls = [row.rowColor, row.groupBorder ? 'group-border' : ''].filter(Boolean).join(' ');
+    const cls = [row.rowColor, row.groupBorder ? 'group-border' : '', row.invalid.size ? 'row-has-invalid' : ''].filter(Boolean).join(' ');
     html += `<tr class="${cls}" onclick="selectRow(this)">`;
     html += `<td style="color:var(--text-secondary);font-size:0.72rem;user-select:none">${idx+1}</td>`;
     for (let c = 0; c < colCount; c++) {
@@ -1142,10 +1145,11 @@ function buildInvalidPanel(rows, headers, hiddenCols) {
       if (lastFocused === btn) lastFocused = null;
       const res = getTd();
       if (!res) return;
-      const { td } = res;
+      const { td, tr } = res;
       td.classList.remove('invalid');
       td.style.background = '#ffffff'; td.style.color = '#111827';
       td.style.fontWeight = ''; td.style.animation = 'none';
+      if (!tr.querySelector('td.invalid')) tr.classList.remove('row-has-invalid');
     };
 
     btn.addEventListener('click', (e) => {
@@ -1176,15 +1180,17 @@ function buildInvalidPanel(rows, headers, hiddenCols) {
       if (lastFocused === btn) lastFocused = null;
       const res = getTd();
       if (!res) return;
-      const { td } = res;
+      const { td, tr } = res;
       if (solved) {
         td.classList.remove('invalid');
         td.style.background = '#ffffff'; td.style.color = '#111827';
         td.style.fontWeight = ''; td.style.animation = 'none';
+        if (!tr.querySelector('td.invalid')) tr.classList.remove('row-has-invalid');
       } else {
         td.classList.add('invalid');
         td.style.background = ''; td.style.color = '';
         td.style.fontWeight = ''; td.style.animation = '';
+        tr.classList.add('row-has-invalid');
       }
     });
 
