@@ -426,7 +426,7 @@
   <span class="sub">Excel Validator</span>
   <span id="modeTag"></span>
   <div class="header-spacer"></div>
-  <div class="version-label">V1.6</div>
+  <div class="version-label">V1.7</div>
   <button class="btn-settings" id="btnOpenSettings" title="Settings">⚙</button>
 </header>
 
@@ -548,8 +548,21 @@
       </div>
 
       <div class="sdw-section">
+        <div class="sdw-section-title">Columns to Copy</div>
+        <div class="sdw-mode-tabs" id="copyColsTabs">
+          <button class="sdw-tab active authen" data-tab="authen">AUTHEN</button>
+          <button class="sdw-tab dmis" data-tab="dmis">DMIS</button>
+        </div>
+        <div class="sdw-col-input-wrap">
+          <input class="sdw-col-input" id="stgCopyColsInput" placeholder="e.g. D or I, S, V, Z, AA, AB" spellcheck="false">
+          <div class="sdw-col-preview" id="stgCopyColPreview"></div>
+          <div class="sdw-col-hint">Columns copied to clipboard for each time group. Separate with commas or spaces.</div>
+        </div>
+      </div>
+
+      <div class="sdw-section">
         <div class="sdw-section-title">Hidden Columns</div>
-        <div class="sdw-mode-tabs">
+        <div class="sdw-mode-tabs" id="hiddenColsTabs">
           <button class="sdw-tab active authen" data-tab="authen">AUTHEN</button>
           <button class="sdw-tab dmis" data-tab="dmis">DMIS</button>
         </div>
@@ -576,13 +589,17 @@ const DEFAULTS = {
   skipInvalidAuthenCopy: false,
   timeGroups: ['05:00','09:30','14:00','18:30'],
   hiddenCols: { authen: 'G, H', dmis: '' },
+  copyCols: { authen: 'D', dmis: 'I, S, V, Z, AA, AB' },
 };
 
 const TG_COLORS = ['#a8d5a2','#9ac4e8','#ffe082','#f4a9a9'];
 const TG_ROW_CLASSES = ['row-green','row-blue','row-yellow','row-redish'];
 
 let cfg = loadSettings();
-let settingsActiveTab = 'authen';
+let hiddenActiveTab = 'authen';
+let copyActiveTab = 'authen';
+let draftHiddenCols = { ...cfg.hiddenCols };
+let draftCopyCols   = { ...cfg.copyCols };
 let pendingData = null, pendingName = null;
 let invalidPanelVisible = true;
 let currentMode = null;
@@ -599,6 +616,7 @@ function loadSettings() {
         skipInvalidAuthenCopy: s.skipInvalidAuthenCopy ?? DEFAULTS.skipInvalidAuthenCopy,
         timeGroups: Array.isArray(s.timeGroups) && s.timeGroups.length === 4 ? s.timeGroups : [...DEFAULTS.timeGroups],
         hiddenCols: { ...DEFAULTS.hiddenCols, ...s.hiddenCols },
+        copyCols:   { ...DEFAULTS.copyCols,   ...s.copyCols },
       };
     }
   } catch(e) {}
@@ -609,6 +627,7 @@ function loadSettings() {
     skipInvalidAuthenCopy: DEFAULTS.skipInvalidAuthenCopy,
     timeGroups: [...DEFAULTS.timeGroups],
     hiddenCols: { ...DEFAULTS.hiddenCols },
+    copyCols:   { ...DEFAULTS.copyCols },
   };
 }
 
@@ -639,6 +658,14 @@ function colListToSet(str) {
   const set = new Set();
   parseColList(str).forEach(tok => { const idx = colLetterToIndex(tok); if (idx !== null) set.add(idx); });
   return set;
+}
+function colListToArray(str) {
+  const arr = [];
+  parseColList(str || '').forEach(tok => {
+    const idx = colLetterToIndex(tok);
+    if (idx !== null && !arr.includes(idx)) arr.push(idx);
+  });
+  return arr;
 }
 
 const gel = id => document.getElementById(id);
@@ -673,6 +700,8 @@ const stgInvalidPopup   = gel('stgInvalidPopup');
 const stgAutoCancelSolve = gel('stgAutoCancelSolve');
 const stgSkipInvalidCopy = gel('stgSkipInvalidCopy');
 const tgGrid            = gel('tgGrid');
+const stgCopyColsInput  = gel('stgCopyColsInput');
+const stgCopyColPreview = gel('stgCopyColPreview');
 const stgHiddenColsInput = gel('stgHiddenColsInput');
 const stgColPreview     = gel('stgColPreview');
 const invalidPopup      = gel('invalidPopup');
@@ -680,7 +709,14 @@ const popupCount        = gel('popupCount');
 const popupPlural       = gel('popupPlural');
 const btnPopupOk        = gel('btnPopupOk');
 
-const openSettings  = () => { populateSettingsUI(); settingsOverlay.classList.add('open'); btnOpenSettings.classList.add('active'); };
+const openSettings  = () => {
+  const initialTab = currentMode || 'authen';
+  hiddenActiveTab = initialTab;
+  copyActiveTab = initialTab;
+  populateSettingsUI();
+  settingsOverlay.classList.add('open');
+  btnOpenSettings.classList.add('active');
+};
 const closeSettings = () => { settingsOverlay.classList.remove('open'); btnOpenSettings.classList.remove('active'); };
 
 btnOpenSettings.addEventListener('click', openSettings);
@@ -692,6 +728,9 @@ function populateSettingsUI() {
   stgInvalidPopup.checked    = cfg.invalidPopupEnabled;
   stgAutoCancelSolve.checked = cfg.autoCancelSolve;
   stgSkipInvalidCopy.checked = cfg.skipInvalidAuthenCopy;
+
+  draftHiddenCols = { ...cfg.hiddenCols };
+  draftCopyCols   = { ...cfg.copyCols };
 
   tgGrid.innerHTML = '';
   cfg.timeGroups.forEach((t, i) => {
@@ -707,7 +746,8 @@ function populateSettingsUI() {
     inp.addEventListener('input', () => validateTgInput(inp));
   });
 
-  renderColTab(settingsActiveTab);
+  setCopyTab(copyActiveTab);
+  setHiddenTab(hiddenActiveTab);
 }
 
 function validateTgInput(inp) {
@@ -715,27 +755,18 @@ function validateTgInput(inp) {
   inp.classList.toggle('invalid-time', inp.value.trim() !== '' && !ok);
 }
 
-function setColTab(tab) {
-  settingsActiveTab = tab;
-  document.querySelectorAll('.sdw-tab').forEach(b => {
+function setHiddenTab(tab) {
+  if (stgHiddenColsInput) draftHiddenCols[hiddenActiveTab] = stgHiddenColsInput.value;
+  hiddenActiveTab = tab;
+  document.querySelectorAll('#hiddenColsTabs .sdw-tab').forEach(b => {
     b.classList.remove('active', 'authen', 'dmis');
     if (b.dataset.tab === tab) b.classList.add('active', tab);
   });
-  renderColTab(tab);
+  stgHiddenColsInput.value = draftHiddenCols[tab] || '';
+  updateHiddenColPreview();
 }
 
-document.querySelectorAll('.sdw-tab').forEach(b => {
-  b.addEventListener('click', () => setColTab(b.dataset.tab));
-});
-
-function renderColTab(tab) {
-  stgHiddenColsInput.value = cfg.hiddenCols[tab] || '';
-  updateColPreview();
-}
-
-stgHiddenColsInput.addEventListener('input', updateColPreview);
-
-function updateColPreview() {
+function updateHiddenColPreview() {
   const tokens = parseColList(stgHiddenColsInput.value);
   stgColPreview.innerHTML = '';
   if (tokens.length === 0) return;
@@ -748,6 +779,48 @@ function updateColPreview() {
   });
 }
 
+function setCopyTab(tab) {
+  if (stgCopyColsInput) draftCopyCols[copyActiveTab] = stgCopyColsInput.value;
+  copyActiveTab = tab;
+  document.querySelectorAll('#copyColsTabs .sdw-tab').forEach(b => {
+    b.classList.remove('active', 'authen', 'dmis');
+    if (b.dataset.tab === tab) b.classList.add('active', tab);
+  });
+  stgCopyColsInput.value = draftCopyCols[tab] || '';
+  updateCopyColPreview();
+}
+
+function updateCopyColPreview() {
+  const tokens = parseColList(stgCopyColsInput.value);
+  stgCopyColPreview.innerHTML = '';
+  if (tokens.length === 0) return;
+  tokens.forEach(tok => {
+    const idx = colLetterToIndex(tok);
+    const tag = document.createElement('span');
+    tag.className = 'sdw-col-tag' + (idx === null ? ' err' : '');
+    tag.textContent = tok;
+    stgCopyColPreview.appendChild(tag);
+  });
+}
+
+stgHiddenColsInput.addEventListener('input', () => {
+  draftHiddenCols[hiddenActiveTab] = stgHiddenColsInput.value;
+  updateHiddenColPreview();
+});
+
+stgCopyColsInput.addEventListener('input', () => {
+  draftCopyCols[copyActiveTab] = stgCopyColsInput.value;
+  updateCopyColPreview();
+});
+
+document.querySelectorAll('#hiddenColsTabs .sdw-tab').forEach(b => {
+  b.addEventListener('click', () => setHiddenTab(b.dataset.tab));
+});
+
+document.querySelectorAll('#copyColsTabs .sdw-tab').forEach(b => {
+  b.addEventListener('click', () => setCopyTab(b.dataset.tab));
+});
+
 function collectSettingsFromUI() {
   const newTg = [];
   let tgValid = true;
@@ -759,8 +832,8 @@ function collectSettingsFromUI() {
   }
   if (!tgValid) return null;
 
-  const newHidden = { ...cfg.hiddenCols };
-  newHidden[settingsActiveTab] = stgHiddenColsInput.value;
+  if (stgHiddenColsInput) draftHiddenCols[hiddenActiveTab] = stgHiddenColsInput.value;
+  if (stgCopyColsInput)   draftCopyCols[copyActiveTab]     = stgCopyColsInput.value;
 
   return {
     invalidPanelEnabled: stgInvalidPanel.checked,
@@ -768,7 +841,8 @@ function collectSettingsFromUI() {
     autoCancelSolve:     stgAutoCancelSolve.checked,
     skipInvalidAuthenCopy: stgSkipInvalidCopy.checked,
     timeGroups: newTg,
-    hiddenCols: newHidden,
+    hiddenCols: { ...draftHiddenCols },
+    copyCols:   { ...draftCopyCols },
   };
 }
 
@@ -791,6 +865,9 @@ btnSaveSettings.addEventListener('click', () => {
     btnSaveSettings.textContent = 'Save settings';
     btnSaveSettings.classList.remove('saved');
   }, 1800);
+
+  if (currentMode === 'authen' && pendingData) renderAuthen(pendingData, pendingName);
+  else if (currentMode === 'dmis' && pendingData) renderDmis(pendingData, pendingName);
 });
 
 btnResetSettings.addEventListener('click', () => {
@@ -801,9 +878,15 @@ btnResetSettings.addEventListener('click', () => {
     skipInvalidAuthenCopy: DEFAULTS.skipInvalidAuthenCopy,
     timeGroups: [...DEFAULTS.timeGroups],
     hiddenCols: { ...DEFAULTS.hiddenCols },
+    copyCols:   { ...DEFAULTS.copyCols },
   };
   saveSettings();
+  draftHiddenCols = { ...cfg.hiddenCols };
+  draftCopyCols   = { ...cfg.copyCols };
   populateSettingsUI();
+
+  if (currentMode === 'authen' && pendingData) renderAuthen(pendingData, pendingName);
+  else if (currentMode === 'dmis' && pendingData) renderDmis(pendingData, pendingName);
 });
 
 btnPopupOk.addEventListener('click', () => invalidPopup.classList.remove('show'));
@@ -946,59 +1029,39 @@ function showApp(rows, headers, invalidCount, filename, hiddenCols, timeCopyCfg)
   statFile.textContent    = filename;
 
   copyPanel.innerHTML = '';
-  const { groupOrder, groupNames, copyCols, multiCol, colTransform } = timeCopyCfg;
+  const { groupOrder, groupNames, copyCols, colTransform } = timeCopyCfg;
 
-  if (groupOrder.length > 0) {
+  if (groupOrder.length > 0 && copyCols && copyCols.length > 0) {
     groupOrder.forEach(tg => {
       const dotColor = TIME_COLORS[tg]?.dot || '#c4b5fd';
       const label    = tg || 'No time';
+      const rowsArr  = Array.from(groupNames[tg] || []);
+      if (rowsArr.length === 0) return;
 
-      if (multiCol) {
-        const rowsArr = Array.from(groupNames[tg]);
-        const lines   = rowsArr.map(r => copyCols.map(ci => { const raw = r[ci] ?? ''; return colTransform && colTransform[ci] ? colTransform[ci](raw) : String(raw); }).join('\t'));
-        const text    = lines.join('\r\n');
-        const btn     = document.createElement('button');
-        const rowCount = rowsArr.length;
-        btn.className = 'copy-btn';
-        btn.innerHTML = `<span class="cbdot" style="background:${dotColor}"></span>Copy ${label} Names (${rowCount})`;
-        btn.addEventListener('click', () => {
-          navigator.clipboard.writeText(text).then(() => {
-            btn.classList.add('copied');
-            btn.innerHTML = `<span class="cbdot" style="background:#86efac"></span>Copied ${rowCount} names!`;
-            setTimeout(() => {
-              btn.classList.remove('copied');
-              btn.innerHTML = `<span class="cbdot" style="background:${dotColor}"></span>Copy ${label} Names (${rowCount})`;
-            }, 2000);
-          });
+      const lines   = rowsArr.map(r => copyCols.map(ci => {
+        const raw = r[ci] ?? '';
+        return colTransform && colTransform[ci] ? colTransform[ci](raw) : String(raw).trim();
+      }).join('\t'));
+      const text    = lines.join('\r\n');
+      const btn     = document.createElement('button');
+      const rowCount = rowsArr.length;
+      btn.className = 'copy-btn';
+      btn.innerHTML = `<span class="cbdot" style="background:${dotColor}"></span>Copy ${label} Names (${rowCount})`;
+      btn.addEventListener('click', () => {
+        navigator.clipboard.writeText(text).then(() => {
+          btn.classList.add('copied');
+          btn.innerHTML = `<span class="cbdot" style="background:#86efac"></span>Copied ${rowCount} names!`;
+          setTimeout(() => {
+            btn.classList.remove('copied');
+            btn.innerHTML = `<span class="cbdot" style="background:${dotColor}"></span>Copy ${label} Names (${rowCount})`;
+          }, 2000);
         });
-        copyPanel.appendChild(btn);
-      } else {
-        copyCols.forEach(colIdx => {
-          const values = [];
-          groupNames[tg].forEach(r => {
-            const v = String(r[colIdx] ?? '').trim();
-            if (v) values.push(v);
-          });
-          if (values.length === 0) return;
-          const text = values.join('\n');
-          const btn  = document.createElement('button');
-          btn.className = 'copy-btn';
-          btn.innerHTML = `<span class="cbdot" style="background:${dotColor}"></span>Copy ${label} names (${values.length})`;
-          btn.addEventListener('click', () => {
-            navigator.clipboard.writeText(text).then(() => {
-              btn.classList.add('copied');
-              btn.innerHTML = `<span class="cbdot" style="background:#86efac"></span>Copied ${values.length} names!`;
-              setTimeout(() => {
-                btn.classList.remove('copied');
-                btn.innerHTML = `<span class="cbdot" style="background:${dotColor}"></span>Copy ${label} names (${values.length})`;
-              }, 2000);
-            });
-          });
-          copyPanel.appendChild(btn);
-        });
-      }
+      });
+      copyPanel.appendChild(btn);
     });
-    copyPanel.style.display = 'flex';
+    copyPanel.style.display = copyPanel.children.length > 0 ? 'flex' : 'none';
+  } else {
+    copyPanel.style.display = 'none';
   }
 
   dropOverlay.style.display = 'none';
@@ -1126,14 +1189,14 @@ function buildInvalidPanel(rows, headers, hiddenCols) {
   toggleLabel.textContent = 'Hide Focus';
 }
 
-function buildCopyGroups(rows, copyCols, multiCol = false, colTransform = {}) {
+function buildCopyGroups(rows, copyCols, colTransform = {}) {
   const groupOrder = [], groupNames = {};
   rows.forEach(row => {
     const tg = row.timeGroup ?? '__none__';
     if (!groupNames[tg]) { groupNames[tg] = []; groupOrder.push(tg); }
     groupNames[tg].push(row.r);
   });
-  return { groupOrder, groupNames, copyCols, multiCol, colTransform };
+  return { groupOrder, groupNames, copyCols, colTransform };
 }
 
 const AUTHEN = {
@@ -1186,7 +1249,8 @@ function renderAuthen(data, filename) {
 
   let copyRows = rows.filter(r => r.rowColor !== 'row-purple');
   if (cfg.skipInvalidAuthenCopy) copyRows = copyRows.filter(r => r.invalid.size === 0);
-  showApp(rows, headers, invalidCount, filename, hiddenCols, buildCopyGroups(copyRows, [AUTHEN.COL_D], false));
+  const authenCopyCols = colListToArray(cfg.copyCols?.authen ?? DEFAULTS.copyCols.authen);
+  showApp(rows, headers, invalidCount, filename, hiddenCols, buildCopyGroups(copyRows, authenCopyCols));
 }
 
 const DMIS = {
@@ -1297,8 +1361,8 @@ function renderDmis(data, filename) {
       return sv(val);
     }
   };
-  const dmisCopyCols = [DMIS.COL_I, DMIS.COL_S, DMIS.COL_V, DMIS.COL_Z, DMIS.COL_AA, DMIS.COL_AB];
-  showApp(rows, headers, invalidCount, filename, hiddenCols, buildCopyGroups(rows, dmisCopyCols, true, dmisTransform));
+  const dmisCopyCols = colListToArray(cfg.copyCols?.dmis ?? DEFAULTS.copyCols.dmis);
+  showApp(rows, headers, invalidCount, filename, hiddenCols, buildCopyGroups(rows, dmisCopyCols, dmisTransform));
 }
 
 function buildLegendHTML() {
