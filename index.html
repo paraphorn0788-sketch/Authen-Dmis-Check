@@ -149,6 +149,12 @@
   tr.row-yellow { background-color: var(--row-yellow); }
   tr.row-redish { background-color: var(--row-redish); }
   tr.row-purple { background-color: var(--row-purple); }
+  tr.row-x0 { background-color: #c9f0e8; }
+  tr.row-x1 { background-color: #fcd9b6; }
+  tr.row-x2 { background-color: #f9d0e3; }
+  tr.row-x3 { background-color: #e0e6b8; }
+  tr.row-x4 { background-color: #e6d5c3; }
+  tr.row-x5 { background-color: #dcdfe4; }
   tr.selected   { background-color: #ffffff !important; }
 
   @keyframes blinkInvalid {
@@ -303,6 +309,24 @@
   .sdw-row-label { font-size: 0.82rem; font-weight: 600; color: #111827; }
   .sdw-row-desc  { font-size: 0.72rem; color: #9ca3af; margin-top: 0.15rem; }
 
+  .sdw-hours-row {
+    display: none; align-items: center; gap: 0.75rem;
+    padding: 0.55rem 0.8rem;
+    background: #ffffff; border-radius: 8px;
+    border: 1px dashed #d1d5db;
+    margin-top: -0.25rem;
+  }
+  .sdw-hours-row.show { display: flex; }
+  .sdw-hours-label { flex: 1; font-size: 0.75rem; color: #374151; }
+  .sdw-hours-input {
+    width: 76px; background: #ffffff; border: 1px solid #d1d5db; color: #111827;
+    border-radius: 6px; padding: 0.38rem 0.5rem;
+    font-size: 0.8rem; font-family: 'Courier New', monospace; text-align: center;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .sdw-hours-input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
+  .sdw-hours-input.invalid-time { border-color: #ef4444; background: #fff5f5; color: #dc2626; }
+
   .toggle-switch { position: relative; width: 38px; height: 21px; flex-shrink: 0; }
   .toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
   .toggle-track {
@@ -423,7 +447,7 @@
   <span class="sub">Excel Validator</span>
   <span id="modeTag"></span>
   <div class="header-spacer"></div>
-  <div class="version-label">V1.9</div>
+  <div class="version-label">V2.2</div>
   <button class="btn-settings" id="btnOpenSettings" title="Settings">⚙</button>
 </header>
 
@@ -547,10 +571,42 @@
       </div>
 
       <div class="sdw-section">
+        <div class="sdw-section-title">End Time Check</div>
+        <div class="sdw-row">
+          <div class="sdw-row-info">
+            <div class="sdw-row-label">AUTHEN end time check</div>
+            <div class="sdw-row-desc">Flag Col Q when it is too soon after the start time in Col P</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="stgEndAuthen" checked>
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+        <div class="sdw-hours-row" id="endAuthenWrap">
+          <span class="sdw-hours-label">Hours from start to end must be this or more</span>
+          <input class="sdw-hours-input" id="stgEndAuthenHrs" type="number" min="0" step="0.5" value="4">
+        </div>
+        <div class="sdw-row">
+          <div class="sdw-row-info">
+            <div class="sdw-row-label">DMIS end time check</div>
+            <div class="sdw-row-desc">Flag Col G when it is too soon after the start time in Col F</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="stgEndDmis" checked>
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+        <div class="sdw-hours-row" id="endDmisWrap">
+          <span class="sdw-hours-label">Hours from start to end must be this or more</span>
+          <input class="sdw-hours-input" id="stgEndDmisHrs" type="number" min="0" step="0.5" value="4">
+        </div>
+      </div>
+
+      <div class="sdw-section">
         <div class="sdw-section-title">Time Group Start Times</div>
         <div class="tg-grid" id="tgGrid"></div>
         <div style="font-size:0.68rem;color:#475569;margin-top:0.25rem">
-          Format: HH:MM — each slot groups rows matching that start time.
+          Format: HH:MM — rows starting in the same hour share a group. These 4 slots keep fixed colors; any other hour gets its own group and color.
         </div>
       </div>
 
@@ -607,6 +663,10 @@ const DEFAULTS = {
   skipInvalidAuthenCopy: false,
   hideColsEnabled: true,
   timeGroups: ['05:00','09:30','14:00','18:30'],
+  endCheck: {
+    authen: { enabled: true, hours: 4 },
+    dmis:   { enabled: true, hours: 4 },
+  },
   hiddenCols: {
     authen: 'G, H',
     dmis: 'B, C, D, E, J, AD, AE, AF, AG, AH, AU, AJ, AK, AL, AI, AM, AN, AO, AP, AQ, AR, AS, AT, AW, AV, AY',
@@ -616,6 +676,20 @@ const DEFAULTS = {
 
 const TG_COLORS = ['#a8d5a2','#9ac4e8','#ffe082','#f4a9a9'];
 const TG_ROW_CLASSES = ['row-green','row-blue','row-yellow','row-redish'];
+const TG_BG = ['#d9ead3','#cfe2f3','#fff2cc','#f4cccc'];
+const EXTRA_STYLES = [
+  { row: 'row-x0', dot: '#6fcfbd', bg: '#c9f0e8' },
+  { row: 'row-x1', dot: '#f2a65a', bg: '#fcd9b6' },
+  { row: 'row-x2', dot: '#ee8fbb', bg: '#f9d0e3' },
+  { row: 'row-x3', dot: '#c2cd6f', bg: '#e0e6b8' },
+  { row: 'row-x4', dot: '#c9a98a', bg: '#e6d5c3' },
+  { row: 'row-x5', dot: '#a3a9b3', bg: '#dcdfe4' },
+];
+
+const mergeEnd = (e = {}) => ({
+  authen: { ...DEFAULTS.endCheck.authen, ...e.authen },
+  dmis:   { ...DEFAULTS.endCheck.dmis,   ...e.dmis },
+});
 
 let cfg = loadSettings();
 let settingsActiveTab = 'authen';
@@ -638,11 +712,16 @@ function loadSettings() {
         skipInvalidAuthenCopy: s.skipInvalidAuthenCopy ?? DEFAULTS.skipInvalidAuthenCopy,
         hideColsEnabled:     s.hideColsEnabled     ?? DEFAULTS.hideColsEnabled,
         timeGroups: Array.isArray(s.timeGroups) && s.timeGroups.length === 4 ? s.timeGroups : [...DEFAULTS.timeGroups],
+        endCheck:   mergeEnd(s.endCheck),
         hiddenCols: { ...DEFAULTS.hiddenCols, ...s.hiddenCols },
         copyCols:   { ...DEFAULTS.copyCols,   ...s.copyCols },
       };
     }
   } catch(e) {}
+  return defaultCfg();
+}
+
+function defaultCfg() {
   return {
     invalidPanelEnabled: DEFAULTS.invalidPanelEnabled,
     invalidPopupEnabled: DEFAULTS.invalidPopupEnabled,
@@ -651,6 +730,7 @@ function loadSettings() {
     skipInvalidAuthenCopy: DEFAULTS.skipInvalidAuthenCopy,
     hideColsEnabled:     DEFAULTS.hideColsEnabled,
     timeGroups: [...DEFAULTS.timeGroups],
+    endCheck:   mergeEnd(),
     hiddenCols: { ...DEFAULTS.hiddenCols },
     copyCols:   { ...DEFAULTS.copyCols },
   };
@@ -658,11 +738,21 @@ function loadSettings() {
 
 const saveSettings = () => localStorage.setItem('authendmis_settings', JSON.stringify(cfg));
 
-function buildTimeColors() {
-  const map = {};
-  cfg.timeGroups.forEach((t, i) => { if (t) map[t] = { row: TG_ROW_CLASSES[i], dot: TG_COLORS[i], label: t }; });
-  return map;
+function groupKey(hhmm) {
+  if (!hhmm) return null;
+  const hour = hhmm.slice(0, 2);
+  const slot = cfg.timeGroups.find(t => t && t.slice(0, 2) === hour);
+  return slot || `${hour}:00`;
 }
+
+function groupStyle(key) {
+  const i = cfg.timeGroups.indexOf(key);
+  if (i >= 0) return { row: TG_ROW_CLASSES[i], dot: TG_COLORS[i], bg: TG_BG[i] };
+  const m = String(key).match(/^(\d{2}):00$/);
+  return m ? EXTRA_STYLES[parseInt(m[1], 10) % EXTRA_STYLES.length] : null;
+}
+
+const groupRank = key => key ? parseInt(key.slice(0, 2), 10) : 999;
 
 function colLetterToIndex(s) {
   s = s.trim().toUpperCase();
@@ -727,6 +817,12 @@ const stgHeaderLetters  = gel('stgHeaderLetters');
 const stgAutoCancelSolve = gel('stgAutoCancelSolve');
 const stgSkipInvalidCopy = gel('stgSkipInvalidCopy');
 const stgHideCols        = gel('stgHideCols');
+const stgEndAuthen       = gel('stgEndAuthen');
+const stgEndAuthenHrs    = gel('stgEndAuthenHrs');
+const endAuthenWrap      = gel('endAuthenWrap');
+const stgEndDmis         = gel('stgEndDmis');
+const stgEndDmisHrs      = gel('stgEndDmisHrs');
+const endDmisWrap        = gel('endDmisWrap');
 const tgGrid            = gel('tgGrid');
 const stgHiddenColsInput = gel('stgHiddenColsInput');
 const stgColPreview      = gel('stgColPreview');
@@ -744,6 +840,11 @@ btnOpenSettings.addEventListener('click', openSettings);
 btnCloseSettings.addEventListener('click', closeSettings);
 settingsBackdrop.addEventListener('click', closeSettings);
 
+function updateEndWraps() {
+  endAuthenWrap.classList.toggle('show', stgEndAuthen.checked);
+  endDmisWrap.classList.toggle('show', stgEndDmis.checked);
+}
+
 function populateSettingsUI() {
   stgInvalidPanel.checked    = cfg.invalidPanelEnabled;
   stgInvalidPopup.checked    = cfg.invalidPopupEnabled;
@@ -751,6 +852,12 @@ function populateSettingsUI() {
   stgAutoCancelSolve.checked = cfg.autoCancelSolve;
   stgSkipInvalidCopy.checked = cfg.skipInvalidAuthenCopy;
   stgHideCols.checked        = cfg.hideColsEnabled;
+
+  stgEndAuthen.checked  = cfg.endCheck.authen.enabled;
+  stgEndAuthenHrs.value = cfg.endCheck.authen.hours;
+  stgEndDmis.checked    = cfg.endCheck.dmis.enabled;
+  stgEndDmisHrs.value   = cfg.endCheck.dmis.hours;
+  updateEndWraps();
 
   hiddenDraft = { ...cfg.hiddenCols };
   copyDraft   = { ...cfg.copyCols };
@@ -778,6 +885,13 @@ function populateSettingsUI() {
 function validateTgInput(inp) {
   const ok = /^\d{2}:\d{2}$/.test(inp.value.trim());
   inp.classList.toggle('invalid-time', inp.value.trim() !== '' && !ok);
+}
+
+function parseHours(inp) {
+  const v = parseFloat(inp.value);
+  const ok = !isNaN(v) && v >= 0;
+  inp.classList.toggle('invalid-time', !ok);
+  return ok ? v : null;
 }
 
 function setColTab(tab) {
@@ -839,6 +953,10 @@ function collectSettingsFromUI() {
   }
   if (!tgValid) return null;
 
+  const authenHrs = parseHours(stgEndAuthenHrs);
+  const dmisHrs   = parseHours(stgEndDmisHrs);
+  if (authenHrs === null || dmisHrs === null) return null;
+
   flushColInputs();
 
   return {
@@ -849,12 +967,17 @@ function collectSettingsFromUI() {
     skipInvalidAuthenCopy: stgSkipInvalidCopy.checked,
     hideColsEnabled:     stgHideCols.checked,
     timeGroups: newTg,
+    endCheck: {
+      authen: { enabled: stgEndAuthen.checked, hours: authenHrs },
+      dmis:   { enabled: stgEndDmis.checked,   hours: dmisHrs },
+    },
     hiddenCols: { ...hiddenDraft },
     copyCols:   { ...copyDraft },
   };
 }
 
 function applySettingsLive() {
+  updateEndWraps();
   const collected = collectSettingsFromUI();
   if (!collected) return;
   cfg = collected;
@@ -862,21 +985,13 @@ function applySettingsLive() {
   rerenderCurrent();
 }
 
-[stgInvalidPanel, stgInvalidPopup, stgHeaderLetters, stgAutoCancelSolve, stgSkipInvalidCopy, stgHideCols]
+[stgInvalidPanel, stgInvalidPopup, stgHeaderLetters, stgAutoCancelSolve, stgSkipInvalidCopy, stgHideCols, stgEndAuthen, stgEndDmis]
   .forEach(el => el.addEventListener('change', applySettingsLive));
+[stgEndAuthenHrs, stgEndDmisHrs]
+  .forEach(el => el.addEventListener('input', applySettingsLive));
 
 btnResetSettings.addEventListener('click', () => {
-  cfg = {
-    invalidPanelEnabled: DEFAULTS.invalidPanelEnabled,
-    invalidPopupEnabled: DEFAULTS.invalidPopupEnabled,
-    headerLetters:       DEFAULTS.headerLetters,
-    autoCancelSolve:     DEFAULTS.autoCancelSolve,
-    skipInvalidAuthenCopy: DEFAULTS.skipInvalidAuthenCopy,
-    hideColsEnabled:     DEFAULTS.hideColsEnabled,
-    timeGroups: [...DEFAULTS.timeGroups],
-    hiddenCols: { ...DEFAULTS.hiddenCols },
-    copyCols:   { ...DEFAULTS.copyCols },
-  };
+  cfg = defaultCfg();
   saveSettings();
   populateSettingsUI();
   rerenderCurrent();
@@ -995,7 +1110,6 @@ function escHtml(s) {
 const colLetter = colIndexToLetter;
 
 function showApp(rows, headers, invalidCount, filename, hiddenCols, timeCopyCfg) {
-  const TIME_COLORS = buildTimeColors();
   const colCount = Math.max(headers.length, ...rows.map(row => row.r.length));
   const hLabel = ci => {
     if (cfg.headerLetters) return colLetter(ci);
@@ -1023,6 +1137,8 @@ function showApp(rows, headers, invalidCount, filename, hiddenCols, timeCopyCfg)
   html += `</tbody></table>`;
   tableWrap.innerHTML = html;
 
+  legendArea.innerHTML = buildLegendHTML(rows);
+
   statRows.textContent    = rows.length;
   statInvalid.textContent = invalidCount;
   statInvalid.className   = 'stat-value ' + (invalidCount > 0 ? 'bad' : 'good');
@@ -1033,7 +1149,7 @@ function showApp(rows, headers, invalidCount, filename, hiddenCols, timeCopyCfg)
 
   if (groupOrder.length > 0) {
     groupOrder.forEach(tg => {
-      const dotColor = TIME_COLORS[tg]?.dot || '#c4b5fd';
+      const dotColor = groupStyle(tg)?.dot || '#c4b5fd';
       const label    = tg || 'No time';
 
       if (multiCol) {
@@ -1196,7 +1312,6 @@ function buildInvalidPanel(rows, headers, hiddenCols) {
 
     invalidPanel.appendChild(btn);
 
-    /* auto-solve cancelled rows in AUTHEN mode */
     if (
       currentMode === 'authen' &&
       cfg.autoCancelSolve &&
@@ -1230,13 +1345,10 @@ const AUTHEN = {
 };
 
 function renderAuthen(data, filename) {
-  const TIME_COLORS = buildTimeColors();
-  const VALID_TIMES = cfg.timeGroups.filter(Boolean);
-
   modeTag.textContent = 'AUTHEN'; modeTag.className = 'authen'; modeTag.style.display = 'inline-block';
 
   const hiddenCols = cfg.hideColsEnabled ? colListToSet(cfg.hiddenCols.authen || '') : new Set();
-  legendArea.innerHTML = buildLegendHTML();
+  const endCheck = cfg.endCheck.authen;
 
   const headers = data[0] || [];
   let rows = data.slice(AUTHEN.DATA_START)
@@ -1247,31 +1359,29 @@ function renderAuthen(data, filename) {
   const flag = (row, c) => { row.invalid.add(c); invalidCount++; };
   rows.forEach(row => {
     const r = row.r;
-    const pHHMM = getHHMM(r[AUTHEN.COL_P]);
-    if (TIME_COLORS[pHHMM]) { row.rowColor = TIME_COLORS[pHHMM].row; row.timeGroup = pHHMM; }
-    else { row.rowColor = 'row-purple'; row.timeGroup = pHHMM || null; }
+    const key = groupKey(getHHMM(r[AUTHEN.COL_P]));
+    if (key) { row.rowColor = groupStyle(key).row; row.timeGroup = key; }
+    else row.rowColor = 'row-purple';
 
     if (String(r[AUTHEN.COL_I] ?? '').trim() !== 'E')            flag(row, AUTHEN.COL_I);
     if (String(r[AUTHEN.COL_M] ?? '').trim() !== AUTHEN.VALID_M) flag(row, AUTHEN.COL_M);
 
-    if (!pHHMM || !VALID_TIMES.includes(pHHMM)) {
+    if (!key) {
       flag(row, AUTHEN.COL_P); row.skipQ = true;
     }
-    if (!row.skipQ) {
+    if (endCheck.enabled && !row.skipQ) {
       const pMin = toTotalMinutes(r[AUTHEN.COL_P]);
       const qMin = toTotalMinutes(r[AUTHEN.COL_Q]);
-      if (pMin === null || qMin === null || (qMin - pMin) < 240) flag(row, AUTHEN.COL_Q);
+      if (pMin === null || qMin === null || (qMin - pMin) < endCheck.hours * 60) flag(row, AUTHEN.COL_Q);
     }
   });
 
   rows.sort((a, b) => (toTotalMinutes(a.r[AUTHEN.COL_Q]) ?? 0) - (toTotalMinutes(b.r[AUTHEN.COL_Q]) ?? 0));
   for (let i = 1; i < rows.length; i++) {
-    const prev = getHHMM(rows[i-1].r[AUTHEN.COL_P]);
-    const curr = getHHMM(rows[i].r[AUTHEN.COL_P]);
-    if (prev && curr && prev !== curr) rows[i].groupBorder = true;
+    if (rows[i-1].timeGroup !== rows[i].timeGroup) rows[i].groupBorder = true;
   }
 
-  let copyRows = rows.filter(r => r.rowColor !== 'row-purple');
+  let copyRows = rows.filter(r => r.timeGroup);
   if (cfg.skipInvalidAuthenCopy) copyRows = copyRows.filter(r => r.invalid.size === 0);
   const copyCols = copyColIndexes('authen');
   showApp(rows, headers, invalidCount, filename, hiddenCols, buildCopyGroups(copyRows, copyCols, copyCols.length > 1));
@@ -1303,13 +1413,10 @@ function dmisMatchP(val) {
 }
 
 function renderDmis(data, filename) {
-  const TIME_COLORS = buildTimeColors();
-  const VALID_TIMES = cfg.timeGroups.filter(Boolean);
-
   modeTag.textContent = 'DMIS'; modeTag.className = 'dmis'; modeTag.style.display = 'inline-block';
 
   const hiddenCols = cfg.hideColsEnabled ? colListToSet(cfg.hiddenCols.dmis || '') : new Set();
-  legendArea.innerHTML = buildLegendHTML();
+  const endCheck = cfg.endCheck.dmis;
 
   const headers = data[5] || [];
   let rows = data.slice(DMIS.DATA_START)
@@ -1320,9 +1427,9 @@ function renderDmis(data, filename) {
   const flag = (row, c) => { row.invalid.add(c); invalidCount++; };
   rows.forEach(row => {
     const r = row.r;
-    const fHHMM = getHHMM(r[DMIS.COL_F]);
-    if (TIME_COLORS[fHHMM]) { row.rowColor = TIME_COLORS[fHHMM].row; row.timeGroup = fHHMM; }
-    else { row.rowColor = 'row-purple'; row.timeGroup = fHHMM || null; }
+    const key = groupKey(getHHMM(r[DMIS.COL_F]));
+    if (key) { row.rowColor = groupStyle(key).row; row.timeGroup = key; }
+    else row.rowColor = 'row-purple';
 
     if (String(r[DMIS.COL_K] ?? '').trim().toLowerCase() !== 'opd') flag(row, DMIS.COL_K);
     for (const c of [DMIS.COL_L, DMIS.COL_M, DMIS.COL_S, DMIS.COL_V, DMIS.COL_W, DMIS.COL_Z]) {
@@ -1340,23 +1447,21 @@ function renderDmis(data, filename) {
     if (r[DMIS.COL_AA] === '' || r[DMIS.COL_AA] == null) flag(row, DMIS.COL_AA);
     const abVal = r[DMIS.COL_AC];
     if (abVal !== '' && abVal != null && abVal !== 1 && parseFloat(abVal) !== 1) flag(row, DMIS.COL_AC);
-    if (!fHHMM || !VALID_TIMES.includes(fHHMM)) flag(row, DMIS.COL_F);
-    const fMin = toTotalMinutes(r[DMIS.COL_F]);
-    const gMin = toTotalMinutes(r[DMIS.COL_G]);
-    if (fMin === null || gMin === null || Math.round(gMin - fMin) !== 240) flag(row, DMIS.COL_G);
+    if (!key) flag(row, DMIS.COL_F);
+    if (endCheck.enabled) {
+      const fMin = toTotalMinutes(r[DMIS.COL_F]);
+      const gMin = toTotalMinutes(r[DMIS.COL_G]);
+      if (fMin === null || gMin === null || Math.round(gMin - fMin) < endCheck.hours * 60) flag(row, DMIS.COL_G);
+    }
   });
 
-  const TIME_ORDER = cfg.timeGroups.filter(Boolean);
-  const timeRank = tg => { const i = TIME_ORDER.indexOf(tg); return i === -1 ? 999 : i; };
   rows.sort((a, b) => {
-    const ta = timeRank(a.timeGroup), tb = timeRank(b.timeGroup);
+    const ta = groupRank(a.timeGroup), tb = groupRank(b.timeGroup);
     if (ta !== tb) return ta - tb;
     return (toTotalMinutes(a.r[DMIS.COL_AX]) ?? 0) - (toTotalMinutes(b.r[DMIS.COL_AX]) ?? 0);
   });
   for (let i = 1; i < rows.length; i++) {
-    const prev = getHHMM(rows[i-1].r[DMIS.COL_F]);
-    const curr = getHHMM(rows[i].r[DMIS.COL_F]);
-    if (prev && curr && prev !== curr) rows[i].groupBorder = true;
+    if (rows[i-1].timeGroup !== rows[i].timeGroup) rows[i].groupBorder = true;
   }
 
   const sv = val => String(val ?? '');
@@ -1389,17 +1494,15 @@ function renderDmis(data, filename) {
   showApp(rows, headers, invalidCount, filename, hiddenCols, buildCopyGroups(rows, dmisCopyCols, dmisCopyCols.length > 1, dmisTransform));
 }
 
-function buildLegendHTML() {
-  const rowClassColors = { 'row-green':'#d9ead3','row-blue':'#cfe2f3','row-yellow':'#fff2cc','row-redish':'#f4cccc' };
+function buildLegendHTML(rows) {
+  const item = (bg, text, extra = '') => `<div class="legend-item"><div class="legend-dot" style="background:${bg};${extra}"></div> ${text}</div>`;
   let html = '';
-  cfg.timeGroups.forEach((t, i) => {
-    if (!t) return;
-    const bg = rowClassColors[TG_ROW_CLASSES[i]] || TG_COLORS[i];
-    html += `<div class="legend-item"><div class="legend-dot" style="background:${bg}"></div> ${t}</div>`;
-  });
-  html += `<div class="legend-item"><div class="legend-dot" style="background:#bea8ff"></div> No time match</div>`;
-  html += `<div class="legend-item"><div class="legend-dot" style="background:#fde8e8;border-color:#f87171"></div> Invalid cell</div>`;
-  html += `<div class="legend-item"><div class="legend-dot" style="background:#1d4ed8;height:3px;width:18px;border:none;border-radius:1px"></div> Group border</div>`;
+  cfg.timeGroups.forEach((t, i) => { if (t) html += item(TG_BG[i], t); });
+  const extras = [...new Set(rows.map(r => r.timeGroup).filter(k => k && !cfg.timeGroups.includes(k)))].sort();
+  extras.forEach(k => { html += item(groupStyle(k).bg, k); });
+  html += item('#bea8ff', 'No time match');
+  html += item('#fde8e8', 'Invalid cell', 'border-color:#f87171');
+  html += item('#1d4ed8', 'Group border', 'height:3px;width:18px;border:none;border-radius:1px');
   return html;
 }
 
