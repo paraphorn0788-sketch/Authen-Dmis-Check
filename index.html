@@ -163,6 +163,7 @@
   }
   td.invalid { animation: blinkInvalid 2s ease-in-out infinite; font-weight: 700; }
   tr.selected td.invalid { animation: blinkInvalid 2s ease-in-out infinite; }
+  td.dup { box-shadow: inset 0 0 0 3px #facc15; font-weight: 700; }
   tr.group-border td { border-top: 2px solid #1d4ed8 !important; }
   tr.row-has-invalid td { border-top: 2px solid #dc2626 !important; border-bottom: 2px solid #dc2626; }
   tr.row-has-invalid td:first-child { border-left: 2px solid #dc2626; }
@@ -447,7 +448,7 @@
   <span class="sub">Excel Validator</span>
   <span id="modeTag"></span>
   <div class="header-spacer"></div>
-  <div class="version-label">V2.2</div>
+  <div class="version-label">V2.4</div>
   <button class="btn-settings" id="btnOpenSettings" title="Settings">⚙</button>
 </header>
 
@@ -753,6 +754,20 @@ function groupStyle(key) {
 }
 
 const groupRank = key => key ? parseInt(key.slice(0, 2), 10) : 999;
+
+function markDuplicates(rows, col, skip = () => false) {
+  const norm = v => String(v ?? '').trim().replace(/\s+/g, ' ').toLowerCase();
+  const counted = rows.filter(row => !skip(row));
+  const counts = new Map();
+  counted.forEach(row => {
+    const n = norm(row.r[col]);
+    if (n) counts.set(n, (counts.get(n) || 0) + 1);
+  });
+  counted.forEach(row => {
+    const n = norm(row.r[col]);
+    if (n && counts.get(n) > 1) row.dupCol = col;
+  });
+}
 
 function colLetterToIndex(s) {
   s = s.trim().toUpperCase();
@@ -1129,7 +1144,8 @@ function showApp(rows, headers, invalidCount, filename, hiddenCols, timeCopyCfg)
       if (hiddenCols.has(c)) continue;
       let v = row.r[c];
       if (row.stripSecondsCols && row.stripSecondsCols.has(c)) v = stripSeconds(v);
-      html += `<td class="${row.invalid.has(c) ? 'invalid' : ''}">${v != null && v !== '' ? escHtml(String(v)) : ''}</td>`;
+      const tdCls = [row.invalid.has(c) ? 'invalid' : '', row.dupCol === c ? 'dup' : ''].filter(Boolean).join(' ');
+      html += `<td class="${tdCls}">${v != null && v !== '' ? escHtml(String(v)) : ''}</td>`;
     }
     html += `</tr>`;
   });
@@ -1344,6 +1360,8 @@ const AUTHEN = {
   DATA_START: 1,
 };
 
+const isCancelled = row => String(row.r[AUTHEN.COL_I] ?? '').trim().toUpperCase() === 'C';
+
 function renderAuthen(data, filename) {
   modeTag.textContent = 'AUTHEN'; modeTag.className = 'authen'; modeTag.style.display = 'inline-block';
 
@@ -1353,7 +1371,7 @@ function renderAuthen(data, filename) {
   const headers = data[0] || [];
   let rows = data.slice(AUTHEN.DATA_START)
     .filter(r => r && r.some(c => c !== undefined && c !== ''))
-    .map(r => ({ r, invalid: new Set(), rowColor: null, timeGroup: null, skipQ: false, groupBorder: false, stripSecondsCols: new Set([AUTHEN.COL_P, AUTHEN.COL_Q]) }));
+    .map(r => ({ r, invalid: new Set(), rowColor: null, timeGroup: null, dupCol: null, skipQ: false, groupBorder: false, stripSecondsCols: new Set([AUTHEN.COL_P, AUTHEN.COL_Q]) }));
 
   let invalidCount = 0;
   const flag = (row, c) => { row.invalid.add(c); invalidCount++; };
@@ -1375,6 +1393,8 @@ function renderAuthen(data, filename) {
       if (pMin === null || qMin === null || (qMin - pMin) < endCheck.hours * 60) flag(row, AUTHEN.COL_Q);
     }
   });
+
+  markDuplicates(rows, AUTHEN.COL_D, isCancelled);
 
   rows.sort((a, b) => (toTotalMinutes(a.r[AUTHEN.COL_Q]) ?? 0) - (toTotalMinutes(b.r[AUTHEN.COL_Q]) ?? 0));
   for (let i = 1; i < rows.length; i++) {
@@ -1421,7 +1441,7 @@ function renderDmis(data, filename) {
   const headers = data[5] || [];
   let rows = data.slice(DMIS.DATA_START)
     .filter(r => r && r.some(c => c !== undefined && c !== ''))
-    .map(r => ({ r, invalid: new Set(), rowColor: null, timeGroup: null, groupBorder: false, stripSecondsCols: new Set([DMIS.COL_F, DMIS.COL_G]) }));
+    .map(r => ({ r, invalid: new Set(), rowColor: null, timeGroup: null, dupCol: null, groupBorder: false, stripSecondsCols: new Set([DMIS.COL_F, DMIS.COL_G]) }));
 
   let invalidCount = 0;
   const flag = (row, c) => { row.invalid.add(c); invalidCount++; };
@@ -1454,6 +1474,8 @@ function renderDmis(data, filename) {
       if (fMin === null || gMin === null || Math.round(gMin - fMin) < endCheck.hours * 60) flag(row, DMIS.COL_G);
     }
   });
+
+  markDuplicates(rows, DMIS.COL_I);
 
   rows.sort((a, b) => {
     const ta = groupRank(a.timeGroup), tb = groupRank(b.timeGroup);
@@ -1502,6 +1524,7 @@ function buildLegendHTML(rows) {
   extras.forEach(k => { html += item(groupStyle(k).bg, k); });
   html += item('#bea8ff', 'No time match');
   html += item('#fde8e8', 'Invalid cell', 'border-color:#f87171');
+  if (rows.some(r => r.dupCol !== null)) html += item('#ffffff', 'Duplicate name', 'border:2px solid #facc15');
   html += item('#1d4ed8', 'Group border', 'height:3px;width:18px;border:none;border-radius:1px');
   return html;
 }
